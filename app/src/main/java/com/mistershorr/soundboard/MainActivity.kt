@@ -4,6 +4,8 @@ import android.media.AudioManager
 import android.media.SoundPool
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -15,7 +17,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.HashMap
+import java.util.*
+import kotlin.concurrent.schedule
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,6 +26,8 @@ class MainActivity : AppCompatActivity() {
     private  lateinit var binding: ActivityMainBinding
 
     lateinit var soundPool : SoundPool
+    lateinit var SimpleSong: Button
+    val noteMap =  HashMap<String,Int>()
     var aNote = 0
     var bbNote = 0
     var bNote = 0
@@ -44,6 +49,9 @@ class MainActivity : AppCompatActivity() {
 
         initializeSoundPool()
         setListeners()
+
+        var song = setGson()
+        playSong(song)
     }
 
     private fun setListeners() {
@@ -60,6 +68,7 @@ class MainActivity : AppCompatActivity() {
         binding.buttonMainFf.setOnClickListener(soundBoardListener)
         binding.buttonMainG.setOnClickListener(soundBoardListener)
         binding.buttonMainGg.setOnClickListener(soundBoardListener)
+        binding.buttonMainSimpleSong.setOnClickListener(soundBoardListener)
     }
 
 
@@ -83,12 +92,30 @@ class MainActivity : AppCompatActivity() {
         ffNote = soundPool.load(this, R.raw.scalefs, 1)
         gNote = soundPool.load(this, R.raw.scaleg, 1)
         ggNote = soundPool.load(this, R.raw.scalegs, 1)
+
+        noteMap["A"] = aNote
+        noteMap["B"] = bNote
+        noteMap["Bb"] =bbNote
+        noteMap["C"] = cNote
+        noteMap["Cc"] = ccNote
+        noteMap["D"] = dNote
+        noteMap["Dd"] = ddNote
+        noteMap["E"] = eNote
+        noteMap["F"] = fNote
+        noteMap["Ff"] = ffNote
+        noteMap["G"] = gNote
+        noteMap["Gg"] = ggNote
+
     }
 
     private fun playNote(noteId : Int) {
         soundPool.play(noteId, 1f, 1f, 1, 0, 1f)
     }
-    fun setGson(){
+
+    private fun playNote(note: String){
+        playNote(noteMap[note] ?: 0)
+    }
+    fun setGson() : List<Note> {
         val inputStream = resources.openRawResource(R.raw.song)
         val jsonText = inputStream.bufferedReader().use{it.readText()}
         Log.d(TAG, "onCreate: $jsonText")
@@ -96,6 +123,34 @@ class MainActivity : AppCompatActivity() {
         val oType = object: TypeToken<List<Note>>(){}.type
         var song = gson.fromJson<List<Note>>(jsonText, oType)
         Log.d(TAG, "onCreate: $song" )
+        return song
+    }
+
+    private fun playSong(song: List<Note>) {
+        // loop through our note objects in the list and play them in order
+        // use the existing playNote functions to help
+    }
+    private suspend fun playsimpleSong(){
+
+            playNote("A"
+                    )
+            delay(600)
+            playNote("C")
+            delay(600)
+            playNote("Cc")
+            delay(600)
+            playNote("D")
+            delay(600)
+            playNote("Dd")
+            delay(600)
+            playNote("E")
+            delay(600)
+            playNote("F")
+            delay(600)
+            playNote("Ff")
+            delay(600)
+
+
     }
     private inner class SoundBoardListener : View.OnClickListener {
         override fun onClick(v: View?) {
@@ -112,6 +167,9 @@ class MainActivity : AppCompatActivity() {
                 R.id.button_main_ff -> playNote(ffNote)
                 R.id.button_main_g -> playNote(gNote)
                 R.id.button_main_gg -> playNote(ggNote)
+                R.id.button_main_simpleSong -> GlobalScope.launch {
+                    playsimpleSong()
+                }
             }
         }
     }
